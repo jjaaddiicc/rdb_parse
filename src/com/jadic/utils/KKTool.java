@@ -76,6 +76,10 @@ public final class KKTool {
 		return buf == null || buf.length == 0;
 	}
 	
+	public static int getUnsignedByte(byte b) {
+        return b >= 0 ? b : 256 + b;
+    }
+	
 	public static void main(String[] args) {
 		byte[] buf = new byte[]{1, 2};
 		log(bytes2Short(buf, false));
