@@ -24,26 +24,26 @@ public class RDBParser {
 	
 	private final static byte[] RDB_FILE_HEAD = "redis".getBytes();
 	
-	private final static int REDIS_TYPE_STRING 				= 0;
-	private final static int REDIS_TYPE_LIST 					= 1;
-	private final static int REDIS_TYPE_SET 					= 2;
-	private final static int REDIS_TYPE_ZSET		 			= 3;
-	private final static int REDIS_TYPE_HASH 					= 4;
-	private final static int REDIS_TYPE_HASH_ZIPMAP			= 9;
-	private final static int REDIS_TYPE_LIST_ZIPLIST			= 10;
-	private final static int REDIS_TYPE_SET_INTSET			= 11;
-	private final static int REDIS_TYPE_ZSET_ZIPLIST 			= 12;
-	private final static int REDIS_TYPE_HASH_ZIPLIST	 		= 13;
+	private final static int REDIS_TYPE_STRING              = 0;
+	private final static int REDIS_TYPE_LIST                = 1;
+	private final static int REDIS_TYPE_SET                 = 2;
+	private final static int REDIS_TYPE_ZSET                = 3;
+	private final static int REDIS_TYPE_HASH                = 4;
+	private final static int REDIS_TYPE_HASH_ZIPMAP         = 9;
+	private final static int REDIS_TYPE_LIST_ZIPLIST        = 10;
+	private final static int REDIS_TYPE_SET_INTSET          = 11;
+	private final static int REDIS_TYPE_ZSET_ZIPLIST        = 12;
+	private final static int REDIS_TYPE_HASH_ZIPLIST        = 13;
 	
-	private final static int REDIS_TYPE_EXPIRE_SECONDS 		= 0xFC;//252
-	private final static int REDIS_TYPE_EXPIRE_MILLISECONDS 	= 0xFD;//253
-	private final static int REDIS_TYPE_SELECT_DB				= 0xFE;//254
-	private final static int REDIS_TYPE_EOF 					= 0xFF;//255
+	private final static int REDIS_TYPE_EXPIRE_SECONDS      = 0xFC;//252
+	private final static int REDIS_TYPE_EXPIRE_MILLISECONDS = 0xFD;//253
+	private final static int REDIS_TYPE_SELECT_DB           = 0xFE;//254
+	private final static int REDIS_TYPE_EOF                 = 0xFF;//255
 	
-	private final static int REDIS_6BIT 		= 0;
-	private final static int REDIS_14BIT 		= 1;
-	private final static int REDIS_32BIT 		= 2;
-	private final static int REDIS_ENCVAL		= 3;
+	private final static int REDIS_6BIT   = 0;
+	private final static int REDIS_14BIT  = 1;
+	private final static int REDIS_32BIT  = 2;
+	private final static int REDIS_ENCVAL = 3;
 	
 	private final static int GET_DB_INDEX_ERR = 0xFFFF;
 	
