@@ -14,12 +14,12 @@ public class ZSetZipList {
 
     private byte[] buf;
     private boolean isParsed;
-    private Map<String, String> elements;
+    private Map<String, Double> elements;
     
     public ZSetZipList(byte[] ziplistBuf) {
         this.buf = ziplistBuf;
         this.isParsed = false;
-        this.elements = new HashMap<String, String>();
+        this.elements = new HashMap<String, Double>();
     }
     
     private void parseElements() {
@@ -112,7 +112,7 @@ public class ZSetZipList {
             if (member == null) {//member
                 member = element;
             } else {             //score
-                elements.put(member, element);
+                elements.put(member, Double.parseDouble(element));
                 member = null;
             }
         }
@@ -127,7 +127,7 @@ public class ZSetZipList {
      * elements may be modified by caller
      * @return
      */
-    public Map<String, String> getElements() {
+    public Map<String, Double> getElements() {
         return elements;
     }
 

@@ -146,7 +146,18 @@ public final class KKTool {
         }
         return result.toString();
     }
-
+    
+    public static String getExceptionTip(Throwable e) {
+        String ret = null;
+        if (e != null) {
+            ret = "msg:" + e.getMessage() + " stacktrace:";
+            StackTraceElement[] stes =  e.getStackTrace();
+            for(StackTraceElement ste : stes) {
+                ret = ret + ste.toString() + " ";
+            }
+        }
+        return ret;
+    }
 
     public static void main(String[] args) {
         

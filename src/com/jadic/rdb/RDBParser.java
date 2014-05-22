@@ -15,32 +15,35 @@ import org.apache.log4j.Logger;
 
 import com.jadic.utils.KKTool;
 import com.jadic.utils.LZF;
+import com.jadic.utils.MyExceptionHandler;
 
 /**
  * redis rdb file parser
  * 
  * @author Jadic
  */
-public class RDBParser {
+public class RDBParser extends Thread {
 
     private Logger logger = Logger.getLogger(RDBParser.class);
 
-    private ILoadNewEntry iLoadNewEntry;
+    private IRestoreRDB iRestoreRDB;
     private RandomAccessFile raf;
+    private File rdbFile;
+    private boolean verifyCheckSum;
     private int currentDBIndex;
 
     private final static byte[] RDB_FILE_HEAD = "REDIS".getBytes();
 
-    private final static int REDIS_TYPE_STRING              = 0;
-    private final static int REDIS_TYPE_LIST                = 1;
-    private final static int REDIS_TYPE_SET                 = 2;
-    private final static int REDIS_TYPE_ZSET                = 3;
-    private final static int REDIS_TYPE_HASH                = 4;
-    private final static int REDIS_TYPE_HASH_ZIPMAP         = 9;
-    private final static int REDIS_TYPE_LIST_ZIPLIST        = 10;
-    private final static int REDIS_TYPE_SET_INTSET          = 11;
-    private final static int REDIS_TYPE_ZSET_ZIPLIST        = 12;
-    private final static int REDIS_TYPE_HASH_ZIPLIST        = 13;
+    public final static int REDIS_TYPE_STRING              = 0;
+    public final static int REDIS_TYPE_LIST                = 1;
+    public final static int REDIS_TYPE_SET                 = 2;
+    public final static int REDIS_TYPE_ZSET                = 3;
+    public final static int REDIS_TYPE_HASH                = 4;
+    public final static int REDIS_TYPE_HASH_ZIPMAP         = 9;
+    public final static int REDIS_TYPE_LIST_ZIPLIST        = 10;
+    public final static int REDIS_TYPE_SET_INTSET          = 11;
+    public final static int REDIS_TYPE_ZSET_ZIPLIST        = 12;
+    public final static int REDIS_TYPE_HASH_ZIPLIST        = 13;
 
     private final static int REDIS_TYPE_EXPIRE_MILLISECONDS = 0xFC;// 252
     private final static int REDIS_TYPE_EXPIRE_SECONDS      = 0xFD;// 253
@@ -60,10 +63,15 @@ public class RDBParser {
     private final static int GET_DB_INDEX_ERR = 0xFFFF;
 
     private final static int REDIS_GET_LENGTH_ERR = Integer.MAX_VALUE;
+    
+    private final static int MAX_ELEMENTS = 10000;
 
-    public RDBParser(ILoadNewEntry iLoadNewEntry) {
-        this.iLoadNewEntry = iLoadNewEntry;
+    public RDBParser(String rdbFilePath, boolean verifyCheckSum, IRestoreRDB iLoadNewEntry) {
+        this.iRestoreRDB = iLoadNewEntry;
         this.currentDBIndex = 0;
+        this.rdbFile = new File(rdbFilePath);
+        this.verifyCheckSum = verifyCheckSum;
+        this.setUncaughtExceptionHandler(new MyExceptionHandler()); 
     }
 
     private boolean isFileHeadValid() {
@@ -251,7 +259,7 @@ public class RDBParser {
                 return false;
             }
             IntSet intSet = new IntSet(intSetBytes);
-            Set<Long> intSetElements = new HashSet<Long>();
+            Set<String> intSetElements = new HashSet<String>();
             intSetElements.addAll(intSet.getElements());
             entry.setValue(intSetElements);
             break;
@@ -261,7 +269,7 @@ public class RDBParser {
                 return false;
             }
             ZSetZipList zSetZipList = new ZSetZipList(zsetZiplistBytes);
-            Map<String, String> zSetZipListElements = new HashMap<String, String>();
+            Map<String, Double> zSetZipListElements = new HashMap<String, Double>();
             zSetZipListElements.putAll(zSetZipList.getElements());
             entry.setValue(zSetZipListElements);
             break;
@@ -284,6 +292,12 @@ public class RDBParser {
                     return false;
                 }
                 list1.add(s1);
+                
+                if (list1.size() >= MAX_ELEMENTS) {
+                    entry.setValue(list1);
+                    restoreEntry(entry);
+                    list1 = new ArrayList<String>();
+                }                
             }
             entry.setValue(list1);
             break;
@@ -296,11 +310,17 @@ public class RDBParser {
                     return false;
                 }
                 list2.add(s2);
+                
+                if (list2.size() >= MAX_ELEMENTS) {
+                    entry.setValue(list2);
+                    restoreEntry(entry);
+                    list2 = new ArrayList<String>();
+                }
             }
             entry.setValue(list2);
             break;
         case REDIS_TYPE_ZSET:
-            Map<String, String> zset = new HashMap<String, String>();
+            Map<String, Double> zset = new HashMap<String, Double>();
             String member = null;
             String s3 = null;
             for (int i = 0; i < len * 2; i ++) {
@@ -311,18 +331,24 @@ public class RDBParser {
                 if (member == null) {
                     member = s3;
                 } else {
-                    zset.put(member, s3);
+                    zset.put(member, Double.parseDouble(s3));
                     member = null;
+                    
+                    if (zset.size() >= MAX_ELEMENTS) {//avoid out of memory
+                        entry.setValue(zset);
+                        restoreEntry(entry);
+                        zset = new HashMap<String, Double>();
+                    }
                 }
             }
             entry.setValue(zset);
             break;
         case REDIS_TYPE_HASH:
-            Map<String, String> hash = new HashMap<String, String>();
-            String field = null;
-            String s4 = null;
+            Map<byte[], byte[]> hash = new HashMap<byte[], byte[]>();
+            byte[] field = null;
+            byte[] s4 = null;
             for (int i = 0; i < len * 2; i ++) {
-                s4 = loadStringObject();
+                s4 = loadBytesObject();
                 if (s4 == null) {
                     return false;
                 }
@@ -331,8 +357,15 @@ public class RDBParser {
                 } else {
                     hash.put(field, s4);
                     field = null;
+                    
+                    if (hash.size() >= MAX_ELEMENTS) {//avoid out of memory
+                        entry.setValue(hash);
+                        restoreEntry(entry);
+                        hash = new HashMap<byte[], byte[]>();
+                    }
                 }
             }
+            logger.info("hash.size:" + hash.size());
             entry.setValue(hash);
             break;
         default:
@@ -340,7 +373,7 @@ public class RDBParser {
         }
         return true;
     }
-
+    
     private String loadKey() {
         return loadStringObject();
     }
@@ -366,13 +399,13 @@ public class RDBParser {
             if (!readBytes(buf, 1, 1)) {
                 return REDIS_GET_LENGTH_ERR;
             }
-            return (buf[0] & 0x3F) << 8 | buf[1];
+            return (buf[0] & 0x3F) << 8 | (buf[1] & 0x00FF);
         } else if (flag == REDIS_32BIT) {
             byte[] buf2 = new byte[4];
             if (!readBytes(buf2)) {
                 return REDIS_GET_LENGTH_ERR;
             }
-            return KKTool.bytes2Int(buf2, false);
+            return KKTool.bytes2Int(buf2, true);
         }
         return REDIS_GET_LENGTH_ERR;
     }
@@ -528,7 +561,7 @@ public class RDBParser {
         }
     }
 
-    public boolean parse(File rdbFile, boolean verifyCheckSum) {
+    private boolean parse() {
         try {
             raf = new RandomAccessFile(rdbFile, "r");
             if (!isFileHeadValid()) {
@@ -550,10 +583,8 @@ public class RDBParser {
                     } else if (type == REDIS_TYPE_SELECT_DB) {
                         continue;
                     } else {
-                        logger.info("parse an entry:" + entry);
-                        if (this.iLoadNewEntry != null) {
-                            this.iLoadNewEntry.loadNewEntry(entry);
-                        }
+                        //logger.info("parse an entry:" + entry);
+                        this.restoreEntry(entry);
                     }
                 } else {
                     parseResult = false;
@@ -561,7 +592,7 @@ public class RDBParser {
                     break;
                 }
             }
-
+            
             return parseResult;
         } catch (FileNotFoundException e) {
             logger.error("file not found:" + e.getMessage());
@@ -577,6 +608,19 @@ public class RDBParser {
         return false;
     }
     
+    private void restoreEntry(Entry entry) {
+        if (this.iRestoreRDB != null) {
+            this.iRestoreRDB.restoreEntry(entry);
+            logger.info("restore entry:" + entry.getKey());
+        }
+    }
+    
+    @Override
+    public void run() {
+        parse();
+        this.iRestoreRDB.finish();
+    }
+    
     private class Encode {
         boolean isEncode;
 
@@ -588,11 +632,6 @@ public class RDBParser {
             this.isEncode = isEncode;
         }
         
-    }
-
-    public static void main(String[] args) {
-        RDBParser rdbParser = new RDBParser(null);
-        rdbParser.parse(new File("E:/vm_shared/dump.rdb"), false);
     }
 
 }

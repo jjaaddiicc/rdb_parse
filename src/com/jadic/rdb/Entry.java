@@ -50,7 +50,12 @@ public final class Entry {
     public Object getValue() {
         return value;
     }
-
+    
+    @SuppressWarnings("unchecked")
+    public <T> T getValueWithType() {
+        return (T)value;
+    }
+    
     public void setValue(Object value) {
         this.value = value;
     }

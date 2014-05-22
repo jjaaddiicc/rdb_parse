@@ -13,11 +13,11 @@ public class IntSet {
     
     private byte[] buf;
     private boolean isParsed;
-    private Set<Long> elements;
+    private Set<String> elements;
     
     public IntSet(byte[] intSetBytes) {
         this.buf = intSetBytes;
-        elements = new HashSet<Long>(); 
+        elements = new HashSet<String>(); 
     }
     
     /**
@@ -51,7 +51,7 @@ public class IntSet {
             } else {
                 element = KKTool.bytes2Long(buf, offset, false);
             }
-            elements.add(element);
+            elements.add(String.valueOf(element));
         }
     }
     
@@ -64,7 +64,7 @@ public class IntSet {
      * elements may be modified by caller
      * @return
      */
-    public Set<Long> getElements() {
+    public Set<String> getElements() {
         this.parseElements();
         return elements;
     }
