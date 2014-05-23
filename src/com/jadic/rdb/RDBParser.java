@@ -219,7 +219,7 @@ public class RDBParser extends Thread {
     }
 
     private boolean loadPair(Entry entry) {
-        String key = loadKey();
+        byte[] key = loadKeyBytes();
         if (key == null) {
             return false;
         }
@@ -235,7 +235,7 @@ public class RDBParser extends Thread {
 
         switch (type) {
         case REDIS_TYPE_STRING:
-            entry.setValue(loadStringObject());
+            entry.setValue(loadBytesObject());
             if (entry.getValue() == null) {
                 return false;
             }
@@ -249,7 +249,7 @@ public class RDBParser extends Thread {
                 return false;
             }
             ZipList zipList = new ZipList(zipListBytes);
-            List<String> elements = new ArrayList<String>();
+            List<byte[]> elements = new ArrayList<byte[]>();
             elements.addAll(zipList.getElements());
             entry.setValue(elements);
             break;
@@ -259,7 +259,7 @@ public class RDBParser extends Thread {
                 return false;
             }
             IntSet intSet = new IntSet(intSetBytes);
-            Set<String> intSetElements = new HashSet<String>();
+            Set<byte[]> intSetElements = new HashSet<byte[]>();
             intSetElements.addAll(intSet.getElements());
             entry.setValue(intSetElements);
             break;
@@ -269,7 +269,7 @@ public class RDBParser extends Thread {
                 return false;
             }
             ZSetZipList zSetZipList = new ZSetZipList(zsetZiplistBytes);
-            Map<String, Double> zSetZipListElements = new HashMap<String, Double>();
+            Map<byte[], Double> zSetZipListElements = new HashMap<byte[], Double>();
             zSetZipListElements.putAll(zSetZipList.getElements());
             entry.setValue(zSetZipListElements);
             break;
@@ -279,15 +279,15 @@ public class RDBParser extends Thread {
                 return false;
             }
             HashZiplist hashZList = new HashZiplist(hashZListBytes);
-            Map<String, String> hashZListElements = new HashMap<String, String>();
+            Map<byte[], byte[]> hashZListElements = new HashMap<byte[], byte[]>();
             hashZListElements.putAll(hashZList.getElements());
             entry.setValue(hashZListElements);
             break;
         case REDIS_TYPE_LIST:
-            List<String> list1 = new ArrayList<String>();
-            String s1 = null;
+            List<byte[]> list1 = new ArrayList<byte[]>();
+            byte[] s1 = null;
             for (int i = 0; i < len; i ++) {
-                s1 = loadStringObject();
+                s1 = loadBytesObject();
                 if (s1 == null) {
                     return false;
                 }
@@ -296,16 +296,17 @@ public class RDBParser extends Thread {
                 if (list1.size() >= MAX_ELEMENTS) {
                     entry.setValue(list1);
                     restoreEntry(entry);
-                    list1 = new ArrayList<String>();
+                    list1 = new ArrayList<byte[]>();
+                    entry = entry.getCopyEntry();
                 }                
             }
             entry.setValue(list1);
             break;
         case REDIS_TYPE_SET:
-            List<String> list2 = new ArrayList<String>();
-            String s2 = null;
+            List<byte[]> list2 = new ArrayList<byte[]>();
+            byte[] s2 = null;
             for (int i = 0; i < len; i ++) {
-                s2 = loadStringObject();
+                s2 = loadBytesObject();
                 if (s2 == null) {
                     return false;
                 }
@@ -314,30 +315,32 @@ public class RDBParser extends Thread {
                 if (list2.size() >= MAX_ELEMENTS) {
                     entry.setValue(list2);
                     restoreEntry(entry);
-                    list2 = new ArrayList<String>();
+                    list2 = new ArrayList<byte[]>();
+                    entry = entry.getCopyEntry();
                 }
             }
             entry.setValue(list2);
             break;
         case REDIS_TYPE_ZSET:
-            Map<String, Double> zset = new HashMap<String, Double>();
-            String member = null;
-            String s3 = null;
+            Map<byte[], Double> zset = new HashMap<byte[], Double>();
+            byte[] member = null;
+            byte[] s3 = null;
             for (int i = 0; i < len * 2; i ++) {
-                s3 = loadStringObject();
+                s3 = loadBytesObject();
                 if (s3 == null) {
                     return false;
                 }
                 if (member == null) {
                     member = s3;
                 } else {
-                    zset.put(member, Double.parseDouble(s3));
+                    zset.put(member, Double.parseDouble(new String(s3)));
                     member = null;
                     
                     if (zset.size() >= MAX_ELEMENTS) {//avoid out of memory
                         entry.setValue(zset);
                         restoreEntry(entry);
-                        zset = new HashMap<String, Double>();
+                        zset = new HashMap<byte[], Double>();
+                        entry = entry.getCopyEntry();
                     }
                 }
             }
@@ -362,6 +365,7 @@ public class RDBParser extends Thread {
                         entry.setValue(hash);
                         restoreEntry(entry);
                         hash = new HashMap<byte[], byte[]>();
+                        entry = entry.getCopyEntry();
                     }
                 }
             }
@@ -374,8 +378,8 @@ public class RDBParser extends Thread {
         return true;
     }
     
-    private String loadKey() {
-        return loadStringObject();
+    private byte[] loadKeyBytes() {
+        return loadBytesObject();
     }
 
     private int loadLength(Encode encode) {
@@ -611,7 +615,7 @@ public class RDBParser extends Thread {
     private void restoreEntry(Entry entry) {
         if (this.iRestoreRDB != null) {
             this.iRestoreRDB.restoreEntry(entry);
-            logger.info("restore entry:" + entry.getKey());
+            logger.info("restore entry:" + entry.toStringWithoutValue());
         }
     }
     

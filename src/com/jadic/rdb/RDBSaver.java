@@ -6,10 +6,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.jadic.utils.MyExceptionHandler;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+
+import com.jadic.utils.MyExceptionHandler;
 
 /**
  * @author 	Jadic
@@ -73,11 +73,11 @@ public class RDBSaver extends Thread implements IRestoreRDB {
     }
     
     private void saveEntry(Entry entry) {
-        String sVal = null;
-        List<String> sList = null;
-        Set<String> set = null;
-        Map<String, Double> zMap = null;
-        Map<String, String> sMap = null;
+        byte[] sVal = null;
+        List<byte[]> sList = null;
+        Set<byte[]> set = null;
+        Map<byte[], Double> zMap = null;
+        Map<byte[], byte[]> sMap = null;
         Map<byte[], byte[]> bytesMap = null;
         
         if (entry.getDbIndex() != currDBIndex) {
@@ -91,26 +91,29 @@ public class RDBSaver extends Thread implements IRestoreRDB {
             break;
         case RDBParser.REDIS_TYPE_LIST:        
             sList = entry.getValueWithType();
-            for (String val : sList) {
-                pipeline.lpush(entry.getKey(), val);
+            for (byte[] val : sList) {
+                pipeline.rpush(entry.getKey(), val);
             }
             break;
         case RDBParser.REDIS_TYPE_SET:         
             sList = entry.getValueWithType();
-            for (String val : sList) {
+            for (byte[] val : sList) {
                 pipeline.sadd(entry.getKey(), val);
             }
             break;
         case RDBParser.REDIS_TYPE_ZSET:        
             zMap = entry.getValueWithType();
             if (zMap.size() > 0) {
-                pipeline.zadd(entry.getKey(), zMap);
+                Set<Map.Entry<byte[], Double>> entrySet = zMap.entrySet();
+                for(Map.Entry<byte[], Double> e : entrySet) {
+                    pipeline.zadd(entry.getKey(), e.getValue(), e.getKey());
+                }
             }
             break;
         case RDBParser.REDIS_TYPE_HASH:     
             bytesMap = entry.getValueWithType();
             if (bytesMap.size() > 0) {
-                pipeline.hmset(entry.getKey().getBytes(), bytesMap);
+                pipeline.hmset(entry.getKey(), bytesMap);
             }
             break;
         case RDBParser.REDIS_TYPE_HASH_ZIPMAP: 
@@ -118,20 +121,23 @@ public class RDBSaver extends Thread implements IRestoreRDB {
             break;
         case RDBParser.REDIS_TYPE_LIST_ZIPLIST:
             sList = entry.getValueWithType();
-            for (String val : sList) {
-                pipeline.lpush(entry.getKey(), val);
+            for (byte[] val : sList) {
+                pipeline.rpush(entry.getKey(), val);
             }
             break;
         case RDBParser.REDIS_TYPE_SET_INTSET:  
             set = entry.getValueWithType();
-            for (String val : set) {
+            for (byte[] val : set) {
                 pipeline.sadd(entry.getKey(), val);
             }
             break;
         case RDBParser.REDIS_TYPE_ZSET_ZIPLIST:
             zMap = entry.getValueWithType();
             if (zMap.size() > 0) {
-                pipeline.zadd(entry.getKey(), zMap);
+                Set<Map.Entry<byte[], Double>> entrySet = zMap.entrySet();
+                for(Map.Entry<byte[], Double> e : entrySet) {
+                    pipeline.zadd(entry.getKey(), e.getValue(), e.getKey());
+                }
             }
             break;
         case RDBParser.REDIS_TYPE_HASH_ZIPLIST:                

@@ -28,7 +28,7 @@ public final class KKTool {
     }
 
     public static void bigLittleEndianRevert(byte[] buf) {
-        if (buf == null || buf.length % 2 == 1) {
+        if (buf == null) {
             return;
         }
 
@@ -96,15 +96,15 @@ public final class KKTool {
         long val = 0;
         if (!isBytesEmpty(buf) && sIndex >= 0 && sIndex + 7 < buf.length) {
             if (isBigEndian) {
-                val = (0x00ff & buf[sIndex]) << 56 | (0x00ff & buf[sIndex + 1]) << 48 
-                    | (0x00ff & buf[sIndex + 2]) << 40 | (0x00ff & buf[sIndex + 3]) << 32 
-                    | (0x00ff & buf[sIndex + 4]) << 24 | (0x00ff & buf[sIndex + 5]) << 16 
-                    | (0x00ff & buf[sIndex + 6]) << 8 | (0x00ff & buf[sIndex + 7]);
+                val = (0x00ffL & buf[sIndex]) << 56 | (0x00ffL & buf[sIndex + 1]) << 48 
+                    | (0x00ffL & buf[sIndex + 2]) << 40 | (0x00ffL & buf[sIndex + 3]) << 32 
+                    | (0x00ffL & buf[sIndex + 4]) << 24 | (0x00ffL & buf[sIndex + 5]) << 16 
+                    | (0x00ffL & buf[sIndex + 6]) << 8 | (0x00ffL & buf[sIndex + 7]);
             } else {
-                val = (0x00ff & buf[sIndex]) | (0x00ff & buf[sIndex + 1]) << 8 
-                    | (0x00ff & buf[sIndex + 2]) << 16 | (0x00ff & buf[sIndex + 3]) << 24 
-                    | (0x00ff & buf[sIndex + 4]) << 32 | (0x00ff & buf[sIndex + 5]) << 40 
-                    | (0x00ff & buf[sIndex + 6]) << 48 | (0x00ff & buf[sIndex + 7]) << 56;
+                val = (0x00ffL & buf[sIndex]) | (0x00ffL & buf[sIndex + 1]) << 8 
+                    | (0x00ffL & buf[sIndex + 2]) << 16 | (0x00ffL & buf[sIndex + 3]) << 24 
+                    | (0x00ffL & buf[sIndex + 4]) << 32 | (0x00ffL & buf[sIndex + 5]) << 40 
+                    | (0x00ffL & buf[sIndex + 6]) << 48 | (0x00ffL & buf[sIndex + 7]) << 56;
             }
         }
         return val;

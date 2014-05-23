@@ -1,5 +1,8 @@
 package com.jadic.rdb;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * @author 	Jadic
@@ -27,7 +30,12 @@ public class RDBRestore {
     }
     
     public static void main(String[] args) {
-        RDBRestore rdbRestore = new RDBRestore("192.168.1.109", 6379, "E:/vm_shared/dump.rdb");
+        Map<byte[], byte[]> map = new HashMap<byte[], byte[]>();
+        map.put("1".getBytes(), "2".getBytes());
+        Entry entry = new Entry();
+        entry.setValue(map);
+        
+        RDBRestore rdbRestore = new RDBRestore("192.168.1.168", 6379, "E:/vm_shared/dump.rdb");
         rdbRestore.restore();
     }
 }

@@ -1,9 +1,11 @@
 package com.jadic.rdb;
 
+import java.nio.charset.Charset;
+
 public final class Entry {
 
     private int type;
-    private String key;
+    private byte[] key;
     private Object value;
     private long expireTime;// timeunit:milliseconds
     private int dbIndex;
@@ -16,6 +18,16 @@ public final class Entry {
         this.expireTime = 0;
         this.dbIndex = 0;
         this.success = false;
+    }
+    
+    public Entry getCopyEntry() {
+        Entry entry = new Entry();
+        entry.setType(this.type);
+        entry.setKey(this.key);
+        entry.setExpireTime(this.expireTime);
+        entry.setDbIndex(this.dbIndex);
+        entry.setSuccess(this.success);
+        return entry;
     }
 
     public Entry(int dbIndex) {
@@ -30,6 +42,15 @@ public final class Entry {
         sBuilder.append(",dbNo:").append(dbIndex);
         return sBuilder.toString();
     }
+    
+    public String toStringWithoutValue() {
+        StringBuilder sBuilder = new StringBuilder();
+        sBuilder.append("type:").append(type).append(",key:").append(key);
+        sBuilder.append(",expireTime:").append(expireTime);
+        sBuilder.append(",dbNo:").append(dbIndex);
+        return sBuilder.toString();
+        
+    }
 
     public int getType() {
         return type;
@@ -39,11 +60,19 @@ public final class Entry {
         this.type = type;
     }
 
-    public String getKey() {
+    public byte[] getKey() {
         return key;
     }
+    
+    public String getKeyStr() {
+        return new String(key);
+    }
+    
+    public String getKeyStr(String charset) {
+        return new String(key, Charset.forName(charset));
+    }
 
-    public void setKey(String key) {
+    public void setKey(byte[] key) {
         this.key = key;
     }
 

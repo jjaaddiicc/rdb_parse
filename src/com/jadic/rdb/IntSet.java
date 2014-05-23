@@ -13,11 +13,11 @@ public class IntSet {
     
     private byte[] buf;
     private boolean isParsed;
-    private Set<String> elements;
+    private Set<byte[]> elements;
     
     public IntSet(byte[] intSetBytes) {
         this.buf = intSetBytes;
-        elements = new HashSet<String>(); 
+        elements = new HashSet<byte[]>(); 
     }
     
     /**
@@ -43,7 +43,7 @@ public class IntSet {
         int elementsCount = KKTool.bytes2Int(buf, offset, false);
         offset += 4;
         long element = 0;
-        for (int i = 0; i < elementsCount && offset + encoding < buf.length; i ++, offset += encoding) {
+        for (int i = 0; i < elementsCount && offset + encoding <= buf.length; i ++, offset += encoding) {
             if (encoding == 2) {
                 element = KKTool.bytes2Short(buf, offset, false);
             } else if (encoding == 4){
@@ -51,7 +51,7 @@ public class IntSet {
             } else {
                 element = KKTool.bytes2Long(buf, offset, false);
             }
-            elements.add(String.valueOf(element));
+            elements.add(String.valueOf(element).getBytes());
         }
     }
     
@@ -64,7 +64,7 @@ public class IntSet {
      * elements may be modified by caller
      * @return
      */
-    public Set<String> getElements() {
+    public Set<byte[]> getElements() {
         this.parseElements();
         return elements;
     }
