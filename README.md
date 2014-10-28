@@ -8,7 +8,7 @@ https://github.com/antirez/redis/blob/unstable/src/redis-check-dump.c
 
 
 This is a tool for parsing redis rdb file and restoring the data to redis backup instance. 
-All redis data structures(REDIS_TYPE_HASH_ZIPMAP excepted) are supported.
+All redis data structures(REDIS_TYPE_HASH_ZIPMAP except) are supported.
 
 Entry.java -----------redis data after parsing <br>
 RDBParser.java -------redis rdb file parser<br>
